@@ -5,6 +5,10 @@ let detector;
 // This function initializes the hand detection model.
 async function initializeDetector() {
     try {
+	// Force TF.js to use the WASM backend (CPU) to avoid WebGL issues.
+	await tf.setBackend('wasm');
+	console.log("Sandbox: TensorFlow.js backend set to WASM.");
+
 	// Wait for the global 'handPoseDetection' object to be ready.
 	await new Promise(resolve => {
 	    const interval = setInterval(() => {
@@ -17,9 +21,9 @@ async function initializeDetector() {
 
 	const model = handPoseDetection.SupportedModels.MediaPipeHands;
 	const detectorConfig = {
-	    runtime: 'tfjs', // Use the TensorFlow.js runtime
-	    modelType: 'lite', // 'lite' is faster, 'full' is more accurate
-	    maxHands: 1 // We only need to track one hand
+	    runtime: 'tfjs', // We are still using the TF.js runtime
+	    modelType: 'lite',
+	    maxHands: 1
 	};
 	detector = await handPoseDetection.createDetector(model, detectorConfig);
 	console.log("Sandbox: Detector initialized successfully.");
@@ -40,15 +44,12 @@ window.addEventListener('message', async (event) => {
     // Check if we received a frame to process
     if (event.data && event.data.type === 'DETECT_HAND') {
 	if (!detector) {
-	    console.log("Sandbox: Detector not ready, ignoring message.");
 	    return;
 	}
 
 	try {
-	    // 'estimateHands' is the core function that runs the model
 	    const hands = await detector.estimateHands(event.data.imageData, { flipHorizontal: true });
 	    if (hands.length > 0) {
-		// If a hand is found, send the keypoints back to the content script
 		window.parent.postMessage({ type: 'HAND_DETECTED', hands: hands }, '*');
 	    }
 	} catch (error) {

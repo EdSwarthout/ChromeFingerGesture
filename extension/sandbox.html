@@ -4,10 +4,12 @@
     <title>Sandbox</title>
     <!--
       The order of these scripts is important.
-      1. The main TensorFlow.js library (tf.js).
-      2. The MediaPipe Hands library, a dependency for the model.
-      3. The hand-pose-detection model itself.
+      1. The WASM backend for CPU processing.
+      2. The main TensorFlow.js library (tf.js).
+      3. The MediaPipe Hands library, a dependency for the model.
+      4. The hand-pose-detection model itself.
     -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@3.18.0/dist/tf-backend-wasm.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/dist/hands.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@2.0.1/dist/hand-pose-detection.min.js"></script>
