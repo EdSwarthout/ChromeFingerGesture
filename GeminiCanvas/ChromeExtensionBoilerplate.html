@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Extension Boilerplate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        .tab-content {
+            background-color: #2d2d2d;
+            border-radius: 0 0 8px 8px;
+        }
+        pre[class*="language-"] {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            border-radius: 0 0 8px 8px;
+        }
+        .copy-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .copy-btn:hover {
+            transform: scale(1.05);
+        }
+        .copy-btn.copied {
+            background-color: #4CAF50; /* Green */
+        }
+        /* Custom scrollbar for code blocks */
+        pre::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        pre::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        pre::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
+            border: 2px solid #2d2d2d;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2 text-white">Gesture Scroller - Project Files</h1>
+        <p class="text-gray-400 mb-6">Here is the boilerplate code for your Chrome extension. Create a new folder for your project, then create each file with the content provided in the tabs below.</p>
+
+        <!-- Tab Buttons -->
+        <div id="tabs" class="flex flex-wrap border-b border-gray-700">
+            <!-- Tab buttons will be injected here by JS -->
+        </div>
+
+        <!-- Tab Content -->
+        <div id="tab-contents">
+            <!-- Tab content panels will be injected here by JS -->
+        </div>
+        
+        <div class="mt-8 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg text-gray-300">
+            <h2 class="text-xl font-semibold text-white mb-2">Next Steps: How to Load Your Extension</h2>
+            <ol class="list-decimal list-inside space-y-2">
+                <li>Create a new folder on your computer named <code>ChromeFingerGesture</code>.</li>
+                <li>Inside that folder, create each file shown in the tabs above (e.g., <code>manifest.json</code>, <code>popup.html</code>, etc.).</li>
+                <li>Also inside the main folder, create a new folder named <code>images</code>. You will need to create three icons (16x16, 48x48, 128x128 pixels) and save them as <code>icon16.png</code>, <code>icon48.png</code>, and <code>icon128.png</code> inside the <code>images</code> folder. You can create simple placeholders for now.</li>
+                <li>Open Google Chrome and navigate to <code>chrome://extensions</code>.</li>
+                <li>Turn on "Developer mode" using the toggle in the top-right corner.</li>
+                <li>Click the "Load unpacked" button and select your <code>ChromeFingerGesture</code> folder.</li>
+                <li>Your extension should now appear in the list and in your Chrome toolbar! Click the icon to see the popup.</li>
+            </ol>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+
+    <script>
+        const files = {
+            "manifest.json": {
+                language: "json",
+                content: `{
+  "manifest_version": 3,
+  "name": "Gesture Scroller",
+  "version": "1.0",
+  "description": "Scroll webpages using finger gestures via your webcam.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  }
+}`
+            },
+            "popup.html": {
+                language: "html",
+                content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gesture Scroller</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gesture Scroller</h1>
+        <div class="control-row">
+            <p id="statusText">Feature is disabled</p>
+            <label class="switch">
+                <input type="checkbox" id="toggleSwitch">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+    <script src="popup.js"><\/script>
+</body>
+</html>`
+            },
+            "popup.css": {
+                language: "css",
+                content: `body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    width: 220px;
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    margin: 0;
+}
+
+.container {
+    padding: 16px;
+    text-align: center;
+}
+
+h1 {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    color: #050505;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#statusText {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccd0d5;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #1877f2;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #1877f2;
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+.slider.round {
+    border-radius: 28px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}`
+            },
+            "popup.js": {
+                language: "javascript",
+                content: `// Get references to the DOM elements
+const toggleSwitch = document.getElementById('toggleSwitch');
+const statusText = document.getElementById('statusText');
+
+// Function to update the status text based on the switch state
+function updateStatus(isEnabled) {
+    statusText.textContent = isEnabled ? 'Feature is enabled' : 'Feature is disabled';
+}
+
+// Load the saved state from chrome.storage.sync when the popup is opened
+chrome.storage.sync.get(['enabled'], (result) => {
+    // !!result.enabled converts the value to a boolean (true/false)
+    toggleSwitch.checked = !!result.enabled;
+    updateStatus(toggleSwitch.checked);
+});
+
+// Add a listener to save the state when the switch is toggled
+toggleSwitch.addEventListener('change', () => {
+    const isEnabled = toggleSwitch.checked;
+    chrome.storage.sync.set({ enabled: isEnabled });
+    updateStatus(isEnabled);
+});`
+            },
+            "background.js": {
+                language: "javascript",
+                content: `// This script runs in the background of the extension.
+
+// Set the initial state of the 'enabled' flag to false when the extension is installed.
+chrome.runtime.onInstalled.addListener(() => {
+    chrome.storage.sync.set({ enabled: false });
+    console.log('Gesture Scroller: Extension installed. Feature is disabled by default.');
+});`
+            },
+            "content.js": {
+                language: "javascript",
+                content: `// This script is injected into every webpage.
+
+console.log("Gesture Scroller: Content script loaded.");
+
+let isEnabled = false;
+
+// Function to start or stop the gesture detection logic
+function handleGestureControl(enabled) {
+    if (enabled) {
+        console.log("Gesture control ACTIVATED. (Logic to come in next step)");
+        // TODO: Add webcam and TensorFlow.js initialization here
+    } else {
+        console.log("Gesture control DEACTIVATED.");
+        // TODO: Add cleanup logic here (e.g., turn off webcam)
+    }
+}
+
+// Listen for changes in the storage.
+// This allows the content script to react when the user toggles the switch in the popup.
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'sync' && changes.enabled) {
+        isEnabled = !!changes.enabled.newValue;
+        handleGestureControl(isEnabled);
+    }
+});
+
+// Check the initial state when the content script is first injected into a page.
+chrome.storage.sync.get(['enabled'], (result) => {
+    isEnabled = !!result.enabled;
+    handleGestureControl(isEnabled);
+});`
+            }
+        };
+
+        const tabsContainer = document.getElementById('tabs');
+        const contentContainer = document.getElementById('tab-contents');
+        let first = true;
+
+        for (const filename in files) {
+            // Create Tab Button
+            const button = document.createElement('button');
+            button.textContent = filename;
+            button.className = `py-2 px-4 text-sm font-medium rounded-t-lg focus:outline-none ${first ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-300'}`;
+            button.dataset.target = filename;
+            tabsContainer.appendChild(button);
+
+            // Create Tab Content
+            const contentDiv = document.createElement('div');
+            contentDiv.id = filename;
+            contentDiv.className = `tab-content relative ${first ? '' : 'hidden'}`;
+
+            const pre = document.createElement('pre');
+            pre.className = `language-${files[filename].language} line-numbers`;
+            pre.style.maxHeight = '500px';
+
+            const code = document.createElement('code');
+            code.textContent = files[filename].content;
+            pre.appendChild(code);
+            
+            const copyButton = document.createElement('button');
+            copyButton.textContent = 'Copy';
+            copyButton.className = 'copy-btn absolute top-2 right-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold py-1 px-2 rounded';
+            copyButton.onclick = () => {
+                const textarea = document.createElement('textarea');
+                textarea.value = files[filename].content;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    copyButton.textContent = 'Copied!';
+                    copyButton.classList.add('copied');
+                } catch (err) {
+                    copyButton.textContent = 'Error';
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textarea);
+                setTimeout(() => {
+                    copyButton.textContent = 'Copy';
+                    copyButton.classList.remove('copied');
+                }, 2000);
+            };
+
+            contentDiv.appendChild(copyButton);
+            contentDiv.appendChild(pre);
+            contentContainer.appendChild(contentDiv);
+
+            first = false;
+        }
+
+        tabsContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                const targetId = e.target.dataset.target;
+
+                // Update button styles
+                tabsContainer.querySelectorAll('button').forEach(btn => {
+                    btn.className = 'py-2 px-4 text-sm font-medium rounded-t-lg focus:outline-none text-gray-400 hover:bg-gray-800 hover:text-gray-300';
+                });
+                e.target.className = 'py-2 px-4 text-sm font-medium rounded-t-lg focus:outline-none bg-gray-700 text-white';
+
+                // Show/hide content
+                contentContainer.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById(targetId).classList.remove('hidden');
+            }
+        });
+
+        // Highlight code after content is set
+        Prism.highlightAll();
+    </script>
+</body>
+</html>
