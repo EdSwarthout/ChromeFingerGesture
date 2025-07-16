@@ -7,7 +7,7 @@
     "storage"
   ],
   "content_security_policy": {
-    "sandbox": "sandbox allow-scripts; script-src 'self' https://cdn.jsdelivr.net;"
+    "sandbox": "sandbox allow-scripts; script-src 'self' https://cdn.jsdelivr.net 'unsafe-eval';"
   },
   "sandbox": {
     "pages": [
