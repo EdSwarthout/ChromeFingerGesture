@@ -6,6 +6,16 @@
   "permissions": [
     "storage"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';",
+    "sandbox": "sandbox allow-scripts; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; object-src 'self';"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [ "tf_worker.js" ],
+      "matches": [ "<all_urls>" ]
+    }
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -20,10 +30,10 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+	"<all_urls>"
       ],
       "js": [
-        "content.js"
+	"content.js"
       ],
       "run_at": "document_idle"
     }
