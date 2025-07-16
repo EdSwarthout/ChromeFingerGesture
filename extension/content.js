@@ -4,69 +4,74 @@ console.log("Gesture Scroller: Content script loaded.");
 let isEnabled = false;
 let videoElement = null;
 let mediaStream = null;
-let detector = null;
 let detectionInterval = null;
+let sandboxIframe = null;
+let canvasElement = null;
+let canvasContext = null;
+let isSandboxReady = false;
 
-// Function to dynamically load a script
-function loadScript(url) {
-    return new Promise((resolve, reject) => {
-	const script = document.createElement('script');
-	script.src = url;
-	script.onload = resolve;
-	script.onerror = reject;
-	document.head.appendChild(script);
+// Function to initialize and add the sandbox iframe to the page
+function initSandbox() {
+    if (sandboxIframe) return;
+
+    console.log("Initializing sandbox iframe...");
+    sandboxIframe = document.createElement('iframe');
+    sandboxIframe.src = chrome.runtime.getURL('sandbox.html');
+    sandboxIframe.style.display = 'none';
+    document.body.appendChild(sandboxIframe);
+
+    // Listen for messages from the sandbox
+    window.addEventListener('message', (event) => {
+	// Basic validation: ensure the message is from our sandbox
+	if (event.source !== sandboxIframe.contentWindow) return;
+
+	if (event.data.type === 'SANDBOX_READY') {
+	    console.log("Content script received SANDBOX_READY message.");
+	    isSandboxReady = true;
+	} else if (event.data.type === 'HAND_DETECTED') {
+	    // We have a hand!
+	    console.log("Hand detected:", event.data.hands[0].keypoints);
+	    // TODO: Translate gesture to scroll
+	}
     });
 }
 
-// Function to load TF.js and the hand-pose-detection model
-async function loadModel() {
-    console.log("Loading TensorFlow.js and MediaPipe Hand-Pose-Detection model...");
-    try {
-	// Load the required scripts in sequence
-	await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core');
-	await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl');
-	await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands');
-	await loadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection');
-
-	console.log("Scripts loaded successfully.");
-
-	// Create the detector
-	const model = handPoseDetection.SupportedModels.MediaPipeHands;
-	const detectorConfig = {
-	    runtime: 'tfjs', // or 'mediapipe'
-	    modelType: 'lite', // or 'full'
-	    maxHands: 1
-	};
-	detector = await handPoseDetection.createDetector(model, detectorConfig);
-	console.log("Hand detector created successfully.");
-
-    } catch (error) {
-	console.error("Error loading model or scripts:", error);
-    }
-}
-
-// Function to start detecting hands
+// Function to start detecting hands by sending frames to the sandbox
 function startDetection() {
-    if (!detector || !videoElement) {
-	console.log("Detector or video not ready.");
+    if (!videoElement) {
+	console.log("Video not ready for detection.");
 	return;
     }
 
-    // Run detection every 100ms
-    detectionInterval = setInterval(async () => {
-	try {
-	    const hands = await detector.estimateHands(videoElement, { flipHorizontal: true });
-	    if (hands.length > 0) {
-		// We have a hand!
-		console.log("Hand detected:", hands[0].keypoints);
-		// TODO: Translate gesture to scroll
-	    }
-	} catch (error) {
-	    console.error("Error during hand detection:", error);
-	}
-    }, 100); // Adjust interval as needed for performance
-}
+    // Setup a canvas to grab frames from the video
+    canvasElement = document.createElement('canvas');
+    canvasElement.style.display = 'none';
+    document.body.appendChild(canvasElement);
+    // 'willReadFrequently' is an optimization hint for the browser
+    canvasContext = canvasElement.getContext('2d', { willReadFrequently: true });
 
+    detectionInterval = setInterval(() => {
+	// Only send frames if the sandbox is ready and the video has data
+	if (!isSandboxReady || !videoElement || videoElement.readyState < 2) {
+	    return;
+	}
+
+	// Match canvas size to video size
+	if (canvasElement.width !== videoElement.videoWidth) {
+	    canvasElement.width = videoElement.videoWidth;
+	    canvasElement.height = videoElement.videoHeight;
+	}
+
+	// Draw the current video frame to the canvas
+	canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+	// Get the image data from the canvas
+	const imageData = canvasContext.getImageData(0, 0, canvasElement.width, canvasElement.height);
+
+	// Send the image data to the sandbox for processing
+	sandboxIframe.contentWindow.postMessage({ type: 'DETECT_HAND', imageData: imageData }, '*');
+
+    }, 100); // Adjust interval as needed
+}
 
 // Function to start the webcam feed
 async function startWebcam() {
@@ -80,6 +85,7 @@ async function startWebcam() {
 	videoElement = document.createElement('video');
 	videoElement.srcObject = mediaStream;
 	videoElement.style.display = 'none';
+	videoElement.setAttribute('playsinline', ''); // Required for autoplay on some platforms
 	document.body.appendChild(videoElement);
 
 	await new Promise((resolve) => {
@@ -91,10 +97,8 @@ async function startWebcam() {
 
 	console.log("Webcam started successfully.");
 
-	// Load the model and then start detection
-	if (!detector) {
-	    await loadModel();
-	}
+	// Initialize the sandbox and start the detection loop
+	initSandbox();
 	startDetection();
 
     } catch (error) {
@@ -118,11 +122,17 @@ function stopWebcam() {
 	videoElement.remove();
 	videoElement = null;
     }
-    // We don't dispose of the detector, so it's ready if the user toggles back on.
-    // This saves loading time. It can be disposed of if memory becomes a concern.
+    if (canvasElement) {
+	canvasElement.remove();
+	canvasElement = null;
+    }
+    if (sandboxIframe) {
+	sandboxIframe.remove();
+	sandboxIframe = null;
+    }
+    isSandboxReady = false;
     console.log("Webcam and detection stopped.");
 }
-
 
 // Main control function
 function handleGestureControl(enabled) {
@@ -135,7 +145,7 @@ function handleGestureControl(enabled) {
     }
 }
 
-// Listen for changes in the storage
+// Listen for changes in storage
 chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'sync' && changes.enabled) {
 	isEnabled = !!changes.enabled.newValue;
